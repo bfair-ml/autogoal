@@ -340,6 +340,14 @@ class ConsoleLogger(Logger):
         self.start_generations = generations
 
     @staticmethod
+    def format_fitness(fitness):
+        return (
+            repr(tuple(f"{float(fn or 0.0):0.3}" for fn in fitness))
+            if isinstance(fitness, (tuple, list))
+            else (f"{float(fitness):0.3}" if fitness is not None else "None")
+        )
+
+    @staticmethod
     def normal(text):
         return termcolor.colored(text, color="gray")
 
@@ -373,7 +381,7 @@ class ConsoleLogger(Logger):
 
         print(
             self.emph("New generation started"),
-            self.success(f"best_fn={float(best_fn or 0.0):0.3}"),
+            self.success(f"best_fn={self.format_fitness(best_fn)}"),
             self.primary(f"generations={generations}"),
             self.primary(f"elapsed={elapsed}"),
             self.primary(f"remaining={remaining}"),
@@ -383,20 +391,23 @@ class ConsoleLogger(Logger):
         print(self.err("(!) Error evaluating pipeline: %s" % e))
 
     def end(self, best, best_fn):
-        print(self.emph("Search completed: best_fn=%.3f, best=\n%r" % (best_fn, best)))
+        print(
+            self.emph(
+                f"Search completed: best_fn={self.format_fitness(best_fn)}, best=\n{repr(best)}"
+            )
+        )
 
     def sample_solution(self, solution):
         print(self.emph("Evaluating pipeline:"))
         print(solution)
 
     def eval_solution(self, solution, fitness):
-        print(self.primary("Fitness=%.3f" % fitness))
+        print(self.primary(f"Fitness={self.format_fitness(fitness)}"))
 
     def update_best(self, new_best, new_fn, previous_best, previous_fn):
         print(
             self.success(
-                "Best solution: improved=%.3f, previous=%.3f"
-                % (new_fn, previous_fn or 0)
+                f"Best solution: improved={self.format_fitness(new_fn)}, previous={self.format_fitness(previous_fn)}"
             )
         )
 
@@ -420,7 +431,7 @@ class ProgressLogger(Logger):
         self.total_counter.update(force=True)
 
     def update_best(self, new_best, new_fn, *args):
-        self.total_counter.desc = "Best: %.3f" % new_fn
+        self.total_counter.desc = f"Best: {self.format_fitness(new_fn)}"
 
     def end(self, *args):
         self.pop_counter.close()
@@ -449,14 +460,14 @@ class RichLogger(Logger):
         self.console.print(repr(solution))
 
     def eval_solution(self, solution, fitness):
-        self.console.print(Panel(f"📈 Fitness=[blue]{fitness:.3f}"))
+        self.console.print(Panel(f"📈 Fitness=[blue]{self.format_fitness(fitness)}"))
 
     def error(self, e: Exception, solution):
         self.console.print(f"⚠️[red bold]Error:[/] {e}")
 
     def start_generation(self, generations, best_fn):
         self.console.rule(
-            f"New generation - Remaining={generations} - Best={best_fn or 0:.3f}"
+            f"New generation - Remaining={generations} - Best={self.format_fitness(best_fn)}"
         )
 
     def start_generation(self, generations, best_fn):
@@ -465,14 +476,14 @@ class RichLogger(Logger):
     def update_best(self, new_best, new_fn, previous_best, previous_fn):
         self.console.print(
             Panel(
-                f"🔥 Best improved from [red bold]{previous_fn or 0:.3f}[/] to [green bold]{new_fn:.3f}[/]"
+                f"🔥 Best improved from [red bold]{self.format_fitness(previous_fn)}[/] to [green bold]{self.format_fitness(new_fn)}[/]"
             )
         )
 
     def end(self, best, best_fn):
         self.console.rule(f"Search finished")
         self.console.print(repr(best))
-        self.console.print(Panel(f"🌟 Best=[green bold]{best_fn or 0:.3f}"))
+        self.console.print(Panel(f"🌟 Best=[green bold]{self.format_fitness(best_fn)}"))
         self.progress.stop()
         self.console.rule("Search finished", style="red")
 
