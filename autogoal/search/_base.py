@@ -1,4 +1,5 @@
 import logging
+import functools
 import enlighten
 import time
 import datetime
@@ -55,9 +56,20 @@ class SearchAlgorithm:
         self._number_of_solutions = number_of_solutions
         self._top_solutions = ()
         self._top_solutions_fns = ()
-        self._ranking_fn = ranking_fn or (
-            (lambda solutions, fns: fns) if maximize else (lambda solutions, fns: -fns)
+        self._ranking_fn = ranking_fn or functools.cmp_to_key(
+            lambda x, y: 1
+            if self._improves(x, y)
+            else (-1 if self._improves(y, x) else 0)
         )
+
+        # worst possible evaluation
+        def worst(maximize: bool) -> float:
+            return -math.inf if maximize else math.inf
+
+        if isinstance(self._maximize, (tuple, list)):
+            self._worst_fn = tuple(map(worst, maximize))
+        else:
+            self._worst_fn = worst(maximize)
 
         if self._evaluation_timeout > 0 or self._memory_limit > 0:
             self._fitness_fn = RestrictedWorkerByJoin(
@@ -146,12 +158,12 @@ class SearchAlgorithm:
                         fn = self._fitness_fn(solution)
                     except Exception as e:
                         failed = True
-                        fn = -math.inf if self._maximize else math.inf
+                        fn = self._worst_fn
                         logger.error(e, solution)
 
                         if self._errors == "raise":
                             if best_fn is None:
-                                best_fn = -math.inf if self._maximize else math.inf
+                                best_fn = self._worst_fn
                             logger.end(best_solution, best_fn)
                             self._rank_solutions(ranking_fn, solutions, fns)
                             raise e from None
@@ -170,16 +182,16 @@ class SearchAlgorithm:
                     logger.eval_solution(solution, fn)
 
                     if satisfies_constraint and (
-                        best_fn is None
-                        or (fn > best_fn and self._maximize)
-                        or (fn < best_fn and not self._maximize)
+                        best_fn is None or self._improves(fn, best_fn)
                     ):
                         logger.update_best(solution, fn, best_solution, best_fn)
                         best_solution = solution
                         best_fn = fn
                         improvement = True
 
-                        if self._target_fn and best_fn >= self._target_fn:
+                        if self._target_fn is not None and self._improves(
+                            best_fn, self._target_fn
+                        ):
                             stop = True
                             break
 
@@ -226,9 +238,19 @@ class SearchAlgorithm:
             pass
 
         if best_fn is None:
-            best_fn = -math.inf if self._maximize else math.inf
+            best_fn = self._worst_fn
         logger.end(best_solution, best_fn)
         return best_solution, best_fn
+
+    def _improves(self, a, b) -> bool:
+        maximize = (
+            self._maximize if isinstance(maximize, (tuple, list)) else (self._maximize,)
+        )
+        not_worst = all(
+            (ai >= bi if m else ai <= bi) for ai, bi, m in zip(a, b, maximize)
+        )
+        better = any((ai > bi if m else ai < bi) for ai, bi, m in zip(a, b, maximize))
+        return not_worst and better
 
     def _generate(self):
         # BUG: When multiprocessing is used for evaluation and no generation
