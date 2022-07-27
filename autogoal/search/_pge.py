@@ -48,9 +48,7 @@ class PESearch(SearchAlgorithm):
 
     def _finish_generation(self, fns):
         # Compute the marginal model of the best pipelines
-        indices = best_indices(
-            fns, k=int(self._selection * len(fns)), maximize=self._maximize
-        )
+        indices = self._indices_of_fittest(fns)
         samplers: List[ModelSampler] = [self._samplers[i] for i in indices]
         updates: Dict = merge_updates(*[sampler.updates for sampler in samplers])
 
@@ -62,9 +60,13 @@ class PESearch(SearchAlgorithm):
             with open("model-" + self._name + ".pickle", "wb") as f:
                 pickle.dump(self._model, f)
 
+    def _indices_of_fittest(self, fns):
+        return best_indices(
+            fns, k=int(self._selection * len(fns)), maximize=self._maximize
+        )
+
     def load(self, name_pickle_file):
-        """Rewrites the probabilistic distribution of metaheuristic with the value of the name model.
-        """
+        """Rewrites the probabilistic distribution of metaheuristic with the value of the name model."""
 
         with open(name_pickle_file) as f:
             loaded_obj = pickle.load(f)
