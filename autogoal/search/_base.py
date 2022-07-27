@@ -243,9 +243,9 @@ class SearchAlgorithm:
         return best_solution, best_fn
 
     def _improves(self, a, b) -> bool:
-        maximize = (
-            self._maximize if isinstance(maximize, (tuple, list)) else (self._maximize,)
-        )
+        maximize = self._maximize
+        if not isinstance(maximize, (tuple, list)):
+            a, b, maximize = (a,), (b,), (maximize,)
         not_worst = all(
             (ai >= bi if m else ai <= bi) for ai, bi, m in zip(a, b, maximize)
         )
