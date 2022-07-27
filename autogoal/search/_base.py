@@ -56,10 +56,17 @@ class SearchAlgorithm:
         self._number_of_solutions = number_of_solutions
         self._top_solutions = ()
         self._top_solutions_fns = ()
-        self._ranking_fn = ranking_fn or functools.cmp_to_key(
-            lambda x, y: 1
-            if self._improves(x, y)
-            else (-1 if self._improves(y, x) else 0)
+        self._ranking_fn = ranking_fn or (
+            lambda _, fns: tuple(
+                map(
+                    functools.cmp_to_key(
+                        lambda x, y: 1
+                        if self._improves(x, y)
+                        else (-1 if self._improves(y, x) else 0)
+                    ),
+                    fns,
+                )
+            )
         )
 
         # worst possible evaluation
