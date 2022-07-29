@@ -6,6 +6,7 @@ from ._base import (
     MemoryLogger,
     RichLogger,
     JsonLogger,
+    format_fitness,
 )
 from ._random import RandomSearch
 from ._pge import ModelSampler, PESearch

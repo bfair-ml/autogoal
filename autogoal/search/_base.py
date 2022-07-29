@@ -340,19 +340,19 @@ class Logger:
         pass
 
 
+def format_fitness(fitness):
+    return (
+        repr(tuple(format_fitness(fn) for fn in fitness))
+        if isinstance(fitness, (tuple, list))
+        else (f"{float(fitness):0.3}" if fitness is not None else "None")
+    )
+
+
 class ConsoleLogger(Logger):
     def begin(self, generations, pop_size):
         print("Starting search: generations=%i" % generations)
         self.start_time = time.time()
         self.start_generations = generations
-
-    @staticmethod
-    def format_fitness(fitness):
-        return (
-            repr(tuple(f"{float(fn or 0.0):0.3}" for fn in fitness))
-            if isinstance(fitness, (tuple, list))
-            else (f"{float(fitness):0.3}" if fitness is not None else "None")
-        )
 
     @staticmethod
     def normal(text):
@@ -388,7 +388,7 @@ class ConsoleLogger(Logger):
 
         print(
             self.emph("New generation started"),
-            self.success(f"best_fn={self.format_fitness(best_fn)}"),
+            self.success(f"best_fn={format_fitness(best_fn)}"),
             self.primary(f"generations={generations}"),
             self.primary(f"elapsed={elapsed}"),
             self.primary(f"remaining={remaining}"),
@@ -400,7 +400,7 @@ class ConsoleLogger(Logger):
     def end(self, best, best_fn):
         print(
             self.emph(
-                f"Search completed: best_fn={self.format_fitness(best_fn)}, best=\n{repr(best)}"
+                f"Search completed: best_fn={format_fitness(best_fn)}, best=\n{repr(best)}"
             )
         )
 
@@ -409,12 +409,12 @@ class ConsoleLogger(Logger):
         print(solution)
 
     def eval_solution(self, solution, fitness):
-        print(self.primary(f"Fitness={self.format_fitness(fitness)}"))
+        print(self.primary(f"Fitness={format_fitness(fitness)}"))
 
     def update_best(self, new_best, new_fn, previous_best, previous_fn):
         print(
             self.success(
-                f"Best solution: improved={self.format_fitness(new_fn)}, previous={self.format_fitness(previous_fn)}"
+                f"Best solution: improved={format_fitness(new_fn)}, previous={format_fitness(previous_fn)}"
             )
         )
 
@@ -438,7 +438,7 @@ class ProgressLogger(Logger):
         self.total_counter.update(force=True)
 
     def update_best(self, new_best, new_fn, *args):
-        self.total_counter.desc = f"Best: {self.format_fitness(new_fn)}"
+        self.total_counter.desc = f"Best: {format_fitness(new_fn)}"
 
     def end(self, *args):
         self.pop_counter.close()
@@ -467,14 +467,14 @@ class RichLogger(Logger):
         self.console.print(repr(solution))
 
     def eval_solution(self, solution, fitness):
-        self.console.print(Panel(f"📈 Fitness=[blue]{self.format_fitness(fitness)}"))
+        self.console.print(Panel(f"📈 Fitness=[blue]{format_fitness(fitness)}"))
 
     def error(self, e: Exception, solution):
         self.console.print(f"⚠️[red bold]Error:[/] {e}")
 
     def start_generation(self, generations, best_fn):
         self.console.rule(
-            f"New generation - Remaining={generations} - Best={self.format_fitness(best_fn)}"
+            f"New generation - Remaining={generations} - Best={format_fitness(best_fn)}"
         )
 
     def start_generation(self, generations, best_fn):
@@ -483,14 +483,14 @@ class RichLogger(Logger):
     def update_best(self, new_best, new_fn, previous_best, previous_fn):
         self.console.print(
             Panel(
-                f"🔥 Best improved from [red bold]{self.format_fitness(previous_fn)}[/] to [green bold]{self.format_fitness(new_fn)}[/]"
+                f"🔥 Best improved from [red bold]{format_fitness(previous_fn)}[/] to [green bold]{format_fitness(new_fn)}[/]"
             )
         )
 
     def end(self, best, best_fn):
         self.console.rule(f"Search finished")
         self.console.print(repr(best))
-        self.console.print(Panel(f"🌟 Best=[green bold]{self.format_fitness(best_fn)}"))
+        self.console.print(Panel(f"🌟 Best=[green bold]{format_fitness(best_fn)}"))
         self.progress.stop()
         self.console.rule("Search finished", style="red")
 
