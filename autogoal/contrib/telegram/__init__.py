@@ -1,7 +1,7 @@
 import time
 import textwrap
 
-from autogoal.search import Logger
+from autogoal.search import Logger, format_fitness
 from telegram.ext import Updater, Dispatcher, CommandHandler
 from telegram import ParseMode
 
@@ -51,7 +51,7 @@ class TelegramLogger(Logger):
         text = textwrap.dedent(
             f"""
             **{self.name}**
-            Best: `{float(self.best):0.3}`
+            Best: `{format_fitness(self.best)}`
             Iterations: `{self.progress}/{self.generations}`
             """
         )
