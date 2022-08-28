@@ -22,6 +22,7 @@ class NSPESearch(PESearch):
         target_fn=None,
         allow_duplicates=True,
         number_of_solutions=None,
+        filter_fn=None,
         ranking_fn=None,
         # =============================
         # args for PESearch
@@ -51,6 +52,9 @@ class NSPESearch(PESearch):
         if ranking_fn is None:
             ranking_fn = default_ranking_fn
 
+        if number_of_solutions is None and filter_fn is None:
+            filter_fn = lambda ranking, solution, fitness: ranking == 0
+
         super().__init__(
             generator_fn=generator_fn,
             fitness_fn=fitness_fn,
@@ -64,6 +68,7 @@ class NSPESearch(PESearch):
             target_fn=target_fn,
             allow_duplicates=allow_duplicates,
             number_of_solutions=number_of_solutions,
+            filter_fn=filter_fn,
             ranking_fn=ranking_fn,
             learning_factor=learning_factor,
             selection=selection,

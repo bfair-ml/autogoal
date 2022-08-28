@@ -31,6 +31,7 @@ class SearchAlgorithm:
         target_fn=None,
         allow_duplicates=True,
         number_of_solutions=None,
+        filter_fn=None,
         ranking_fn=None,
     ):
         if generator_fn is None and fitness_fn is None:
@@ -54,6 +55,7 @@ class SearchAlgorithm:
         self._target_fn = target_fn
         self._allow_duplicates = allow_duplicates
         self._number_of_solutions = number_of_solutions
+        self._filter_fn = filter_fn
         self._top_solutions = ()
         self._top_solutions_fns = ()
         self._ranking_fn = ranking_fn or (
@@ -285,7 +287,7 @@ class SearchAlgorithm:
         pass
 
     def _rank_solutions(self, ranking_fn, solutions, fns):
-        if self._number_of_solutions is None:
+        if self._number_of_solutions is None and self._filter_fn is None:
             return
 
         solutions_to_rank = list(self._top_solutions)
@@ -304,14 +306,21 @@ class SearchAlgorithm:
         ranking = ranking_fn(solutions_to_rank, solutions_fns)
         _, ranked_solutions_fns, ranked_solutions = zip(
             *sorted(
-                zip(ranking, solutions_fns, solutions_to_rank),
+                filter(
+                    lambda sol: self._filter_fn is None or self._filter_fn(*sol),
+                    zip(ranking, solutions_fns, solutions_to_rank),
+                ),
                 key=lambda x: x[0],  # mandatory
                 reverse=True,
             )
         )
 
-        self._top_solutions = ranked_solutions[: self._number_of_solutions]
-        self._top_solutions_fns = ranked_solutions_fns[: self._number_of_solutions]
+        self._top_solutions = ranked_solutions[
+            : self._number_of_solutions or len(ranked_solutions)
+        ]
+        self._top_solutions_fns = ranked_solutions_fns[
+            : self._number_of_solutions or len(ranked_solutions_fns)
+        ]
 
 
 class Logger:
