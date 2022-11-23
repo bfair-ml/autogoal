@@ -159,7 +159,7 @@ class SearchAlgorithm:
                         )
                         continue
 
-                    if not self._allow_duplicates and repr(solution) in seen:
+                    if not self._allow_duplicates and repr(solution) in seen: # TODO: si _allow_duplicates es False, puede que se cree un problema porque se des alineen los samples y los fns
                         continue
 
                     try:
