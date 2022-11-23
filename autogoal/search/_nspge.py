@@ -89,7 +89,7 @@ class NSPESearch(PESearch):
                 indices.extend(
                     sorted(
                         front,
-                        key=lambda i: (fns[i], self.crowding_distance(fns, front, i)),
+                        key=lambda i: self.crowding_distance(fns, front, i),
                         reverse=True,
                     )[: k - len(indices)]
                 )
@@ -123,7 +123,7 @@ class NSPESearch(PESearch):
 
         return fronts[:-1]
 
-    def crowding_distance(self, fns, front, i):
+    def crowding_distance(self, fns, front, selected_front):
         if len(front) == 0:
             raise ValueError("Front is empty.")
         elif len(front) < 0:
@@ -142,4 +142,4 @@ class NSPESearch(PESearch):
                 crowding_distances[i] += (
                     fns[front[i + 1]][m] - fns[front[i - 1]][m]
                 ) / scale
-        return crowding_distances[i]
+        return crowding_distances[selected_front]
