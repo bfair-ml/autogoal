@@ -80,7 +80,9 @@ class SearchAlgorithm:
         else:
             self._worst_fn = worst(maximize)
 
-        if self._evaluation_timeout > 0 or self._memory_limit > 0:
+        if (self._evaluation_timeout is not None and self._evaluation_timeout > 0) or (
+            self._memory_limit is not None and self._memory_limit > 0
+        ):
             self._fitness_fn = RestrictedWorkerByJoin(
                 self._fitness_fn, self._evaluation_timeout, self._memory_limit
             )
