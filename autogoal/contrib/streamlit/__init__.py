@@ -18,7 +18,7 @@ class StreamlitLogger(Logger):
         self.status = st.info("Waiting for evaluation start.")
         self.progress = st.progress(0)
         self.error_log = st.empty()
-        self.best_fn = 0
+        self.best_fn = 0.0
         self.chart = st.line_chart([dict(current=0.0, best=0.0)])
         self.current_pipeline = st.code("")
         self.best_pipeline = None
@@ -36,11 +36,18 @@ class StreamlitLogger(Logger):
         self.current += 1
         self.status.info(
             f"""
-            [Best={self.best_fn:0.3}] 🕐 Iteration {self.current}/{self.evaluations}.
+            [Best={self.format_best_fn()}] 🕐 Iteration {self.current}/{self.evaluations}.
             """
         )
         self.progress.progress(self.current / self.evaluations)
         self.current_pipeline.code(repr(solution))
+
+    def format_best_fn(self):
+        return (
+            f"{self.best_fn:0.3}"
+            if isinstance(self.best_fn, float)
+            else str(self.best_fn)
+        )
 
     def eval_solution(self, solution, fitness):
         self.chart.add_rows([dict(current=fitness, best=self.best_fn)])
@@ -48,7 +55,7 @@ class StreamlitLogger(Logger):
     def end(self, best, best_fn):
         self.status.success(
             f"""
-            **Evaluation completed:** 👍 Best solution={best_fn:0.3}
+            **Evaluation completed:** 👍 Best solution={self.format_best_fn()}
             """
         )
         self.progress.progress(1.0)
